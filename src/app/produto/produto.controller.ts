@@ -30,7 +30,11 @@ export class ProdutoController {
     produto.caracteristicas = createProdutoDto.caracteristicas;
     produto.imagens = createProdutoDto.imagens;
 
-    return this.produtoService.create(produto);
+    this.produtoService.create(produto);
+
+    return {
+      messagem: 'Produto criado com sucesso',
+    };
   }
 
   @Get()
