@@ -1,26 +1,57 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUsuarioDto } from './dto/create-usuario.dto';
-import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { Usuario } from './entities/usuario.entity';
 
 @Injectable()
 export class UsuariosService {
-  create(createUsuarioDto: CreateUsuarioDto) {
-    return 'This action adds a new usuario';
+  private usuarios: Usuario[] = [];
+
+  async create(createUsuario: Usuario) {
+    this.usuarios.push(createUsuario);
   }
 
-  findAll() {
-    return `This action returns all usuarios`;
+  async findAll() {
+    return this.usuarios;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} usuario`;
+  private findOne(id: string) {
+    const possivelUsuario = this.usuarios.find(
+      (usuarioSalvo) => usuarioSalvo.id === id,
+    );
+
+    if (!possivelUsuario) {
+      throw new Error('Usuário não existe');
+    }
+
+    return possivelUsuario;
   }
 
-  update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-    return `This action updates a #${id} usuario`;
+  async update(id: string, updateUsuarioDto: Partial<Usuario>) {
+    const usuario = this.findOne(id);
+
+    Object.entries(updateUsuarioDto).forEach(([chave, valor]) => {
+      if (chave === 'id') {
+        return;
+      }
+
+      usuario[chave] = valor;
+    });
+
+    return usuario;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} usuario`;
+  async remove(id: string) {
+    const usuario = this.findOne(id);
+    this.usuarios = this.usuarios.filter(
+      (usuarioSalvo) => usuarioSalvo.id !== id,
+    );
+    return usuario;
+  }
+
+  async existeComEmail(email: string) {
+    const possivelUsuario = this.usuarios.find(
+      (usuario) => usuario.email === email,
+    );
+
+    return possivelUsuario !== undefined;
   }
 }
