@@ -1,57 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { Usuario } from './entities/usuario.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ListUsuarioDTO } from './dto/list-usuario.dto';
 
 @Injectable()
 export class UsuariosService {
-  private usuarios: Usuario[] = [];
+  constructor(
+    @InjectRepository(Usuario)
+    private readonly usuarioRepository: Repository<Usuario>,
+  ) {}
 
   async create(createUsuario: Usuario) {
-    this.usuarios.push(createUsuario);
+    await this.usuarioRepository.save(createUsuario);
   }
 
   async findAll() {
-    return this.usuarios;
-  }
-
-  private findOne(id: string) {
-    const possivelUsuario = this.usuarios.find(
-      (usuarioSalvo) => usuarioSalvo.id === id,
+    const usuariosSalvos = await this.usuarioRepository.find();
+    return usuariosSalvos.map(
+      (usuario) => new ListUsuarioDTO(usuario.id, usuario.nome),
     );
-
-    if (!possivelUsuario) {
-      throw new Error('Usuário não existe');
-    }
-
-    return possivelUsuario;
   }
 
   async update(id: string, updateUsuarioDto: Partial<Usuario>) {
-    const usuario = this.findOne(id);
-
-    Object.entries(updateUsuarioDto).forEach(([chave, valor]) => {
-      if (chave === 'id') {
-        return;
-      }
-
-      usuario[chave] = valor;
-    });
-
-    return usuario;
+    await this.usuarioRepository.update(id, updateUsuarioDto);
   }
 
   async remove(id: string) {
-    const usuario = this.findOne(id);
-    this.usuarios = this.usuarios.filter(
-      (usuarioSalvo) => usuarioSalvo.id !== id,
-    );
-    return usuario;
+    await this.usuarioRepository.delete(id);
   }
 
   async existeComEmail(email: string) {
-    const possivelUsuario = this.usuarios.find(
-      (usuario) => usuario.email === email,
-    );
-
-    return possivelUsuario !== undefined;
+    return await this.usuarioRepository.findOne({
+      where: { email },
+    });
   }
 }
